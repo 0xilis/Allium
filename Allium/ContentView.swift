@@ -7,6 +7,7 @@
 
 import SwiftUI
 import UniformTypeIdentifiers
+import ZIPFoundation
 
 // MARK: - Data Model
 struct Note: Identifiable, Codable, Equatable {
@@ -181,6 +182,43 @@ class NotesManager: ObservableObject {
         )
         return modifiedNote
     }
+    
+    func exportAllNotes() throws -> URL {
+        let tempDir = URL(fileURLWithPath: NSTemporaryDirectory()).appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+            
+        var usedFilenames = Set<String>()
+        
+        try notes.forEach { note in
+            var fileName = "\(note.title.isEmpty ? "Untitled" : note.title).md"
+            .components(separatedBy: .illegalCharacters)
+            .joined()
+            .replacingOccurrences(of: " ", with: "_")
+            
+            /*
+             * This is bad but it's to prevent a case where
+             * two notes share the same name, and one
+             * overwrites the other. So I just add _number
+             * to each note here.
+             */
+            let baseName = fileName
+            var suffix = 2
+            
+            while usedFilenames.contains(fileName) {
+                fileName = "\(baseName)_\(suffix).md"
+                suffix += 1
+            }
+                
+            usedFilenames.insert(fileName)
+            let fileURL = tempDir.appendingPathComponent(fileName)
+            try note.content.write(to: fileURL, atomically: true, encoding: .utf8)
+        }
+            
+        let zipURL = tempDir.deletingLastPathComponent().appendingPathComponent("NotesArchive.zip")
+        try FileManager.default.zipItem(at: tempDir, to: zipURL)
+            
+        return zipURL
+    }
 }
 
 // MARK: - Main Content View
@@ -188,6 +226,7 @@ struct ContentView: View {
     @StateObject private var manager = NotesManager()
     @State private var selectedNote: Note?
     @State private var searchQuery = ""
+    @State private var showingOnboarding = true
     
     var filteredNotes: [Note] {
         if searchQuery.isEmpty {
@@ -229,8 +268,18 @@ struct ContentView: View {
             .navigationTitle("Notes")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button(action: manager.addNote) {
-                        Label("New Note", systemImage: "plus")
+                    Menu {
+                        Button(action: manager.addNote) {
+                            Label("New Note", systemImage: "plus")
+                        }
+                        
+                        Button {
+                            exportAllNotes()
+                        } label: {
+                            Label("Export All", systemImage: "square.and.arrow.up.on.square")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis.circle")
                     }
                 }
             }
@@ -246,6 +295,10 @@ struct ContentView: View {
             } message: { error in
                 Text(error.errorDescription ?? "Unknown error")
             }
+            .fullScreenCover(isPresented: $showingOnboarding, content: {
+                OnboardingView.init()
+                .edgesIgnoringSafeArea(.all)
+            })
             
             Text("Select a note")
                 .foregroundStyle(.secondary)
@@ -281,6 +334,23 @@ struct ContentView: View {
             var modifiedNote = note
             modifiedNote.isPinned.toggle()
             manager.updateNote(modifiedNote)
+        }
+    }
+    
+    private func presentShareSheet(items: [Any]) {
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                let rootVC = windowScene.windows.first?.rootViewController else { return }
+            
+        let activityVC = UIActivityViewController(activityItems: items, applicationActivities: nil)
+        rootVC.present(activityVC, animated: true)
+    }
+    
+    private func exportAllNotes() {
+        do {
+            let zipURL = try manager.exportAllNotes()
+            presentShareSheet(items: [zipURL])
+        } catch {
+            // TODO: Do an error handling too, right now too lazy to implement
         }
     }
 }
@@ -322,7 +392,8 @@ struct NoteEditorView: View {
                 }
             FormattingToolbar(
                 onBold: { formatSelection(prefix: "**", suffix: "**") },
-                onItalic: { formatSelection(prefix: "*", suffix: "*") }
+                onItalic: { formatSelection(prefix: "*", suffix: "*") },
+                onSearch: { showFindReplace = true }
             )
             .padding(.horizontal)
         }
@@ -377,7 +448,9 @@ struct NoteEditorView: View {
     }
     
     private func formatSelection(prefix: String, suffix: String) {
+        print("test0")
         guard let range = currentSelection else { return }
+        print("test1")
         // Maybe there's a better way but I'm using NSString because I'm too objc-brained, if there is PR it
         let nsString = modifiedNote.content as NSString
         let selectedText = nsString.substring(with: range)
@@ -411,7 +484,7 @@ struct NoteEditorView: View {
             let url = try manager.exportNote(modifiedNote)
             presentShareSheet(items: [url])
         } catch {
-            manager.lastError = .exportError
+            // TODO: Do an error handling too, right now too lazy to implement
         }
     }
     
@@ -455,6 +528,7 @@ struct HighlightedText: View {
 struct FormattingToolbar: View {
     var onBold: () -> Void
     var onItalic: () -> Void
+    var onSearch: () -> Void
     
     var body: some View {
         HStack {
@@ -464,6 +538,9 @@ struct FormattingToolbar: View {
             Button(action: onItalic) {
                 Image(systemName: "italic")
             }
+            /*Button(action: onSearch) {
+                Image(systemName: "magnifyingglass")
+            }*/
             Spacer()
         }
         .buttonStyle(.bordered)
@@ -478,6 +555,8 @@ struct FindReplaceView: View {
     var onFind: () -> Void
     var onReplace: () -> Void
     var onReplaceAll: () -> Void
+    
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         NavigationView {
@@ -498,7 +577,7 @@ struct FindReplaceView: View {
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
-                        // Dismiss
+                        dismiss()
                     }
                 }
             }
@@ -506,7 +585,6 @@ struct FindReplaceView: View {
     }
 }
 
-// MARK: - Additional Components
 struct SearchBar: UIViewRepresentable {
     @Binding var text: String
     
