@@ -14,6 +14,8 @@
 		B09A3B1F2DD6AC6800BC56B6 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B09A3B1E2DD6AC6800BC56B6 /* ContentView.swift */; };
 		B09A3B212DD6AC7000BC56B6 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B09A3B202DD6AC7000BC56B6 /* Assets.xcassets */; };
 		B09A3B242DD6AC7000BC56B6 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B09A3B232DD6AC7000BC56B6 /* Preview Assets.xcassets */; };
+		B0DD2C732DE6BCB200BE994C /* Down in Frameworks */ = {isa = PBXBuildFile; productRef = B0DD2C722DE6BCB200BE994C /* Down */; };
+		B0DD2C752DE6BCED00BE994C /* NoteEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0DD2C742DE6BCED00BE994C /* NoteEditorView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -23,6 +25,7 @@
 		B09A3B1E2DD6AC6800BC56B6 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		B09A3B202DD6AC7000BC56B6 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		B09A3B232DD6AC7000BC56B6 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
+		B0DD2C742DE6BCED00BE994C /* NoteEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NoteEditorView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +35,7 @@
 			files = (
 				B08D039B2DD83235003847D7 /* ZIPFoundation in Frameworks */,
 				B08D03A02DD8365E003847D7 /* UIOnboarding in Frameworks */,
+				B0DD2C732DE6BCB200BE994C /* Down in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -62,6 +66,7 @@
 				B08D03A12DD836AE003847D7 /* OnboardingView.swift */,
 				B09A3B202DD6AC7000BC56B6 /* Assets.xcassets */,
 				B09A3B222DD6AC7000BC56B6 /* Preview Content */,
+				B0DD2C742DE6BCED00BE994C /* NoteEditorView.swift */,
 			);
 			path = Allium;
 			sourceTree = "<group>";
@@ -93,6 +98,7 @@
 			packageProductDependencies = (
 				B08D039A2DD83235003847D7 /* ZIPFoundation */,
 				B08D039F2DD8365E003847D7 /* UIOnboarding */,
+				B0DD2C722DE6BCB200BE994C /* Down */,
 			);
 			productName = Allium;
 			productReference = B09A3B192DD6AC6800BC56B6 /* Allium.app */;
@@ -125,6 +131,7 @@
 			packageReferences = (
 				B08D03992DD83235003847D7 /* XCRemoteSwiftPackageReference "ZIPFoundation" */,
 				B08D039E2DD8365E003847D7 /* XCRemoteSwiftPackageReference "UIOnboarding" */,
+				B0DD2C712DE6BCB200BE994C /* XCRemoteSwiftPackageReference "Down" */,
 			);
 			productRefGroup = B09A3B1A2DD6AC6800BC56B6 /* Products */;
 			projectDirPath = "";
@@ -155,6 +162,7 @@
 				B08D03A22DD836AE003847D7 /* OnboardingView.swift in Sources */,
 				B09A3B1F2DD6AC6800BC56B6 /* ContentView.swift in Sources */,
 				B09A3B1D2DD6AC6800BC56B6 /* AlliumApp.swift in Sources */,
+				B0DD2C752DE6BCED00BE994C /* NoteEditorView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -373,6 +381,14 @@
 				minimumVersion = 2.0.0;
 			};
 		};
+		B0DD2C712DE6BCB200BE994C /* XCRemoteSwiftPackageReference "Down" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/johnxnguyen/Down";
+			requirement = {
+				branch = master;
+				kind = branch;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -385,6 +401,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = B08D039E2DD8365E003847D7 /* XCRemoteSwiftPackageReference "UIOnboarding" */;
 			productName = UIOnboarding;
+		};
+		B0DD2C722DE6BCB200BE994C /* Down */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B0DD2C712DE6BCB200BE994C /* XCRemoteSwiftPackageReference "Down" */;
+			productName = Down;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};
