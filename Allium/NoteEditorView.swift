@@ -191,6 +191,9 @@ struct NoteEditorView: View {
                 }*/
             
             MarkdownEditorView(text: $modifiedNote.content)
+            .onChange(of: modifiedNote) { newValue in
+                manager.updateNote(newValue)
+            }
             
             FormattingToolbar(
                 onBold: { formatSelection(prefix: "**", suffix: "**") },
