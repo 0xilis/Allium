@@ -13,6 +13,7 @@ import Down
 // MARK: - Updated Note Editor
 struct MarkdownEditorView: View {
     @Binding var text: String
+    @Binding var currentSelection: NSRange?
     @State private var editorMode: EditorMode = .edit
     @State private var formattedText = NSAttributedString()
     
@@ -45,7 +46,7 @@ struct MarkdownEditorView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }*/
         VStack(spacing: 0) {
-            SyntaxHighlightedEditor(text: $text)
+            SyntaxHighlightedEditor(text: $text, currentSelection: $currentSelection)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
@@ -54,6 +55,7 @@ struct MarkdownEditorView: View {
 // MARK: - Syntax Highlighted Editor
 struct SyntaxHighlightedEditor: UIViewRepresentable {
     @Binding var text: String
+    @Binding var currentSelection: NSRange?
     let syntaxHighlighter = SyntaxHighlighter()
     
     func makeUIView(context: Context) -> UITextView {
@@ -66,23 +68,35 @@ struct SyntaxHighlightedEditor: UIViewRepresentable {
     }
     
     func updateUIView(_ uiView: UITextView, context: Context) {
-        let highlightedText = syntaxHighlighter.highlight(text)
-        uiView.attributedText = highlightedText
+        if uiView.attributedText.string != text {
+            let highlightedText = syntaxHighlighter.highlight(text)
+            uiView.attributedText = highlightedText
+        }
+                
+        if let range = currentSelection {
+            uiView.selectedRange = range
+        }
     }
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(text: $text)
+        Coordinator(text: $text, currentSelection: $currentSelection)
     }
     
     class Coordinator: NSObject, UITextViewDelegate {
         @Binding var text: String
+        @Binding var currentSelection: NSRange?
         
-        init(text: Binding<String>) {
+        init(text: Binding<String>, currentSelection: Binding<NSRange?>) {
             _text = text
+            _currentSelection = currentSelection
         }
         
         func textViewDidChange(_ textView: UITextView) {
             text = textView.text
+        }
+        
+        func textViewDidChangeSelection(_ textView: UITextView) {
+            currentSelection = textView.selectedRange
         }
     }
 }
@@ -190,7 +204,7 @@ struct NoteEditorView: View {
                     manager.updateNote(newValue)
                 }*/
             
-            MarkdownEditorView(text: $modifiedNote.content)
+            MarkdownEditorView(text: $modifiedNote.content, currentSelection: $currentSelection)
             .onChange(of: modifiedNote) { newValue in
                 manager.updateNote(newValue)
             }
