@@ -32,6 +32,7 @@ enum AppError: LocalizedError {
     case loadError
     case exportError
     case invalidInput
+    case importError(String)
     
     var errorDescription: String? {
         switch self {
@@ -39,6 +40,7 @@ enum AppError: LocalizedError {
         case .loadError: return "Failed to load notes"
         case .exportError: return "Failed to export note"
         case .invalidInput: return "Invalid input"
+        case .importError(let message): return "Import failed: \(message)"
         }
     }
 }
@@ -83,7 +85,7 @@ class NotesManager: ObservableObject {
         loadNotes()
     }
     
-    private func saveNotes() {
+    func saveNotes() {
         do {
             let data = try JSONEncoder().encode(notes)
             UserDefaults.standard.set(data, forKey: "notes")
@@ -219,6 +221,23 @@ class NotesManager: ObservableObject {
             
         return zipURL
     }
+    
+    func importNote(from url: URL) throws -> Note {
+        guard url.startAccessingSecurityScopedResource() else {
+            throw AppError.importError("Access denied")
+        }
+            
+        defer { url.stopAccessingSecurityScopedResource() }
+            
+        let content = try String(contentsOf: url)
+        let title = url.deletingPathExtension().lastPathComponent
+            
+        return Note(
+            title: title,
+            content: content,
+            date: Date()
+        )
+    }
 }
 
 // MARK: - Main Content View
@@ -226,7 +245,13 @@ struct ContentView: View {
     @StateObject private var manager = NotesManager()
     @State private var selectedNote: Note?
     @State private var searchQuery = ""
-    @State private var showingOnboarding = true
+    @State private var showingOnboarding: Bool
+    @State private var isImporting = false
+    
+    init() {
+        let hasCompletedOnboarding = UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+        _showingOnboarding = State(initialValue: !hasCompletedOnboarding)
+    }
     
     var filteredNotes: [Note] {
         if searchQuery.isEmpty {
@@ -278,6 +303,18 @@ struct ContentView: View {
                         } label: {
                             Label("Export All", systemImage: "square.and.arrow.up.on.square")
                         }
+                        
+                        Button {
+                            isImporting = true
+                        } label: {
+                            Label("Import Note", systemImage: "square.and.arrow.down")
+                        }
+                                                
+                        #if DEBUG || TESTFLIGHT
+                        Button(action: resetOnboarding) {
+                            Label("Reset Onboarding", systemImage: "arrow.clockwise")
+                        }
+                        #endif
                     } label: {
                         Image(systemName: "ellipsis.circle")
                     }
@@ -296,9 +333,22 @@ struct ContentView: View {
                 Text(error.errorDescription ?? "Unknown error")
             }
             .fullScreenCover(isPresented: $showingOnboarding, content: {
-                OnboardingView.init()
+                OnboardingView {
+                    UserDefaults.standard.set(true, forKey: "hasCompletedOnboarding")
+                    showingOnboarding = false
+                }
                 .edgesIgnoringSafeArea(.all)
             })
+            .onAppear() {
+                showingOnboarding = !UserDefaults.standard.bool(forKey: "hasCompletedOnboarding")
+            }
+            .fileImporter(
+                isPresented: $isImporting,
+                allowedContentTypes: [.plainText, .text],
+                allowsMultipleSelection: false
+            ) { result in
+                handleImportResult(result)
+            }
             
             Text("Select a note")
                 .foregroundStyle(.secondary)
@@ -352,6 +402,25 @@ struct ContentView: View {
         } catch {
             // TODO: Do an error handling too, right now too lazy to implement
         }
+    }
+    
+    private func handleImportResult(_ result: Result<[URL], Error>) {
+        do {
+            let urls = try result.get()
+            guard let url = urls.first else { return }
+                
+            let note = try manager.importNote(from: url)
+            manager.notes.insert(note, at: 0)
+            manager.saveNotes()
+                
+        } catch {
+            manager.lastError = .importError(error.localizedDescription)
+        }
+    }
+    
+    private func resetOnboarding() {
+        UserDefaults.standard.set(false, forKey: "hasCompletedOnboarding")
+        showingOnboarding = true
     }
 }
 

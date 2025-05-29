@@ -96,7 +96,9 @@ struct SyntaxHighlightedEditor: UIViewRepresentable {
         }
         
         func textViewDidChangeSelection(_ textView: UITextView) {
-            currentSelection = textView.selectedRange
+            DispatchQueue.main.async {
+                self.currentSelection = textView.selectedRange
+            }
         }
     }
 }

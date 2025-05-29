@@ -9,7 +9,8 @@ import SwiftUI
 import UIOnboarding
 
 struct OnboardingView: UIViewControllerRepresentable {
-    @Environment(\.dismiss) var dismiss
+    //@Environment(\.dismiss) var dismiss
+    var completion: () -> Void
     
     func makeUIViewController(context: Context) -> UIOnboardingViewController {
         let configuration = UIOnboardingViewConfiguration(
@@ -53,18 +54,26 @@ struct OnboardingView: UIViewControllerRepresentable {
     func updateUIViewController(_ uiViewController: UIOnboardingViewController, context: Context) {}
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(dismiss: dismiss)
+        Coordinator(completion: completion)
     }
     
     class Coordinator: NSObject, UIOnboardingViewControllerDelegate {
-        let dismiss: DismissAction
+        let dismiss: DismissAction?
+        let completion: (() -> Void)?
         
         init(dismiss: DismissAction) {
             self.dismiss = dismiss
+            self.completion = nil
+        }
+        
+        init(completion: @escaping () -> Void) {
+            self.dismiss = nil
+            self.completion = completion
         }
         
         func didFinishOnboarding(onboardingViewController: UIOnboardingViewController) {
-            dismiss()
+            dismiss?()
+            completion?()
         }
     }
 }
