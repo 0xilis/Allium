@@ -96,9 +96,9 @@ struct SyntaxHighlightedEditor: UIViewRepresentable {
         }
         
         func textViewDidChangeSelection(_ textView: UITextView) {
-            DispatchQueue.main.async {
+            //DispatchQueue.main.async {
                 self.currentSelection = textView.selectedRange
-            }
+            //}
         }
     }
 }
@@ -182,6 +182,7 @@ struct NoteEditorView: View {
     @State private var currentSelection: NSRange?
     @State private var searchResults: [Range<String.Index>] = []
     @State private var currentSearchIndex = 0
+    @Environment(\.presentationMode) private var presentationMode
     
     init(note: Note, manager: NotesManager) {
         self.note = note
@@ -253,6 +254,12 @@ struct NoteEditorView: View {
                             systemImage: modifiedNote.isPinned ? "pin.slash" : "pin"
                         )
                     }
+                    
+                    Button(role: .destructive) {
+                        deleteNote()
+                    } label: {
+                        Label("Delete Note", systemImage: "trash")
+                    }
                 } label: {
                     Image(systemName: "ellipsis.circle")
                 }
@@ -270,9 +277,7 @@ struct NoteEditorView: View {
     }
     
     private func formatSelection(prefix: String, suffix: String) {
-        print("test0")
         guard let range = currentSelection else { return }
-        print("test1")
         // Maybe there's a better way but I'm using NSString because I'm too objc-brained, if there is PR it
         let nsString = modifiedNote.content as NSString
         let selectedText = nsString.substring(with: range)
@@ -325,6 +330,11 @@ struct NoteEditorView: View {
     
     private func wrapCodeBlock() {
         modifiedNote.content += "\n```\n// Your code here\n```"
+    }
+    
+    private func deleteNote() {
+        manager.deleteNote(byId: modifiedNote.id)
+        presentationMode.wrappedValue.dismiss()
     }
 }
 

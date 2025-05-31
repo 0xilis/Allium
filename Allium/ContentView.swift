@@ -127,6 +127,15 @@ class NotesManager: ObservableObject {
         saveNotes()
     }
     
+    func deleteNote(byId id: UUID) {
+        if let index = notes.firstIndex(where: { $0.id == id }) {
+            _ = withAnimation {
+                notes.remove(at: index)
+            }
+            saveNotes()
+        }
+    }
+    
     // MARK: - Formatting Support
     func wrapSelection(_ text: String, prefix: String, suffix: String) -> String {
         return "\(prefix)\(text)\(suffix)"
